@@ -1,0 +1,15 @@
+[package]
+name = "bsv-go"
+version = "2.1.1"
+edition = "2021"
+
+[lib]
+# If you only wanted dynamic library, you'd use only "cdylib".
+# If you only wanted static library, you'd use only "staticlib".
+# This demo shows both. See https://doc.rust-lang.org/reference/linkage.html
+# for more information.
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+bsv = { path = "../bsv-wasm" }
+libc = "0.2.2"

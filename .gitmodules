@@ -1,0 +1,3 @@
+[submodule "bsv-wasm"]
+	path = bsv-wasm
+	url = https://github.com/Firaenix/bsv-wasm.git
