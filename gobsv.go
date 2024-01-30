@@ -1,10 +1,10 @@
 package gobsv
 
 /*
-#cgo LDFLAGS: ./lib/libbsv_go.a -ldl -lm
-#include "./lib/main.h"
-#include "./lib/private_key.h"
-#include "./lib/public_key.h"
+#cgo LDFLAGS: lib/libbsv_go.a -ldl -lm
+#include "lib/main.h"
+#include "lib/private_key.h"
+#include "lib/public_key.h"
 */
 import "C"
 import (
@@ -21,6 +21,10 @@ func PrivateKeyFromHex(hexStr string) (*PrivateKey, error) {
 		return nil, errors.New("failed to create private key from hex")
 	}
 	return &PrivateKey{key: key}, nil
+}
+
+func (p *PrivateKey) String() string {
+	return p.ToHex()
 }
 
 func (p *PrivateKey) ToHex() string {
