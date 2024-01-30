@@ -1,14 +1,4 @@
-#include <stdint.h>
 
-struct BSVPrivateKey;
-struct BSVPublicKey;
-struct Signature;
-struct ECIESCiphertext;
-
-typedef struct ByteArray {
-    uint8_t* data;
-    size_t len;
-} ByteArray;
 
 
 // privatekey.to_bytes
