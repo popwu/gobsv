@@ -1,7 +1,8 @@
 package gobsv
 
 /*
-#cgo LDFLAGS: -L${SRCDIR} ./lib/libbsv_go.a -ldl -lm
+#cgo CFLAGS: -I${SRCDIR}/lib
+#cgo LDFLAGS: ${SRCDIR}/lib/libbsv_go.a -ldl -lm
 #include "lib/main.h"
 #include "lib/private_key.h"
 #include "lib/public_key.h"
