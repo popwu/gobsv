@@ -1,38 +1,5 @@
 package gobsv
 
-/*
-#cgo CFLAGS: -I${SRCDIR}/lib
-#cgo LDFLAGS: ${SRCDIR}/lib/libbsv_go.a -ldl -lm
-#include "lib/main.h"
-#include "lib/private_key.h"
-#include "lib/public_key.h"
-*/
-import "C"
-import (
-	"errors"
-)
-
-type PrivateKey struct {
-	key *C.BSVPrivateKey
-}
-
-func PrivateKeyFromHex(hexStr string) (*PrivateKey, error) {
-	key := C.privatekey_from_hex(C.CString(string(hexStr)))
-	if key == nil {
-		return nil, errors.New("failed to create private key from hex")
-	}
-	return &PrivateKey{key: key}, nil
-}
-
-func (p *PrivateKey) String() string {
-	return p.ToHex()
-}
-
-func (p *PrivateKey) ToHex() string {
-	hex := C.privatekey_to_hex(p.key)
-	return C.GoString(hex)
-}
-
 // // NewPrivateKey 创建一个新的 PrivateKey 实例
 // func NewPrivateKey() *PrivateKey {
 // 	return &PrivateKey{

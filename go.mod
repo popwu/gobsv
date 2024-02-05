@@ -1,3 +1,3 @@
-module github.com/popwu/gobsv
+module gobsv
 
 go 1.21.6
