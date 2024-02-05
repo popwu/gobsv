@@ -5,8 +5,8 @@ use crate::{
     sighash::{SigHash, SighashSignature},
     PublicKey,
 };
-use bsv::BSVTxIn as BSVBSVTxIn;
-use bsv::BSVTxOut as BSVBSVTxOut;
+use bsv::BSVTxIn as BSVTxIn;
+use bsv::BSVTxOut as BSVTxOut;
 
 use std::slice;
 extern crate serde_json;

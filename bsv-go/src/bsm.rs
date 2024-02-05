@@ -1,4 +1,6 @@
 use bsv::BSM as BSVBSM;
+use bsv::P2PKHAddress as BSVP2PKHAddress;
+use bsv::Signature as BSVSignature
 
 // pub fn is_valid_message(message: &[u8], signature: &Signature, address: &P2PKHAddress) -> bool {
 //     BSVBSM::verify_message(message, &signature.0, &address.0).is_ok()

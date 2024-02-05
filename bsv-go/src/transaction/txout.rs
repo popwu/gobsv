@@ -1,5 +1,26 @@
 use bsv::TxOut as BSVTxOut;
 
+#[repr(C)]
+pub struct ByteArray {
+    data: *mut u8,
+    len: usize,
+}
+
+#[repr(C)]
+pub struct ByteArrayArray {
+    data: *mut ByteArray,
+    len: usize,
+}
+
+impl From<Vec<u8>> for ByteArray {
+    fn from(vec: Vec<u8>) -> Self {
+        let len = vec.len();
+        let data = vec.as_ptr() as *mut u8;
+        std::mem::forget(vec);
+        Self { data, len }
+    }
+}
+
 // #[wasm_bindgen(constructor)]
 // pub fn new(value: u64, script_pub_key: &Script) -> TxOut {
 //     TxOut(BSVTxOut::new(value, &script_pub_key.0))

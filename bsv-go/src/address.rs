@@ -1,4 +1,5 @@
 use bsv::P2PKHAddress as BSVP2PKHAddress;
+use bsv::Script as BSVScript;
 
 #[repr(C)]
 pub struct ByteArray {

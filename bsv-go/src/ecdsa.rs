@@ -1,4 +1,7 @@
 use bsv::ECDSA as BSVECDSA;
+use bsv::PrivateKey as BSVPrivateKey;
+use bsv::PublicKey as BSVPublicKey;
+use bsv::{RecoveryInfo as BSVRecoveryInfo, Signature as BSVSignature};
 
 // pub fn private_key_from_signature_k(
 //     signature: &Signature,

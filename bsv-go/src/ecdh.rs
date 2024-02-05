@@ -1,4 +1,6 @@
 use bsv::ECDH as BSVECDH;
+use bsv::PrivateKey as BSVPrivateKey;
+use bsv::PublicKey as BSVPublicKey;
 
 // pub fn derive_shared_key(priv_key: &PrivateKey, pub_key: &PublicKey) -> Result<Vec<u8>, wasm_bindgen::JsError> {
 //     Ok(BSVECDH::derive_shared_key(&priv_key.0, &pub_key.0)?)
