@@ -1,5 +1,5 @@
 
-
+// typedef struct BSVPrivateKey BSVPrivateKey;
 
 // privatekey.to_bytes
 ByteArray privatekey_to_bytes(struct BSVPrivateKey* private_key);

@@ -1,15 +1,16 @@
 #ifndef TXIN_H
 #define TXIN_H
 
-#include <stdint.h>
-#include <stdbool.h>
+// #include <stdint.h>
+// #include <stdbool.h>
 
-typedef struct {
-  uint8_t *data;
-  size_t len;
-} ByteArray;
+// typedef struct {
+//   uint8_t *data;
+//   size_t len;
+// } ByteArray;
 
 // Function prototypes for TxIn
+typedef struct BSVTxIn BSVTxIn;
 
 // Creates a new TxIn object
 extern BSVTxIn *txin_new(
@@ -93,7 +94,7 @@ extern ByteArray *txin_to_bytes(BSVTxIn *txin);
 extern char *txin_to_hex(BSVTxIn *txin);
 
 // Creates a TxIn object from outpoint bytes
-extern BSVTxIn *txin_from_outpoint_bytes(uint8_t *outpoint, size_t len);
+// extern BSVTxIn *txin_from_outpoint_bytes(uint8_t *outpoint, size_t len);
 
 // Converts the TxIn object
 #endif // TXIN_H

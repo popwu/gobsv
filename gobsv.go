@@ -6,11 +6,20 @@ import (
 )
 
 func main() {
-	pub, err := libs.PublicKeyFromHex("test")
-	fmt.Println(pub, err)
+	// pub, err := libs.PublicKeyFromHex("test")
+	// fmt.Println(pub, err)
 
-	txin := libs.NewTxIn([]byte("test"), 1, nil, 1)
-	fmt.Println(txin)
+	pri, err := libs.PrivateKeyFromRandom()
+	fmt.Println(pri, err)
+
+	// txin := libs.NewTxIn([]byte("test"), 1, nil, 1)
+	// fmt.Println(txin)
+	script, err := libs.NewScriptFromASMString("OP_0 OP_2")
+	fmt.Println(script, err)
+	hex, err := script.ToHex()
+	fmt.Println(hex, err)
+	// fmt.Println(script.ToASMString())
+
 }
 
 // // NewPrivateKey 创建一个新的 PrivateKey 实例

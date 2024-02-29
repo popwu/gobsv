@@ -1,4 +1,4 @@
-
+// typedef struct BSVPublicKey BSVPublicKey;
 
 char* publickey_to_address(BSVPublicKey* public_key);
 BSVPublicKey* publickey_from_hex(char* hex_str);

@@ -1,7 +1,11 @@
 use bsv::Script as BSVScript;
 use std::ffi::CStr;
 use std::ffi::CString;
-use std::os::raw::c_char;
+
+#[repr(C)]
+pub struct Error {
+    message: *mut libc::c_char,
+}
 
 #[repr(C)]
 pub struct ByteArray {
@@ -18,14 +22,29 @@ impl From<Vec<u8>> for ByteArray {
     }
 }
 
+fn set_error_message(error: *mut Error, message: String) {
+    unsafe {
+        (*error).message = CString::new(message).unwrap().into_raw();
+    }
+}
+
 // pub fn to_asm_string(&self) -> String {
 //     BSVScript::to_asm_string(&self.0)
 // }
 #[no_mangle]
-pub extern "C" fn script_to_asm_string(script: *mut BSVScript) -> *mut libc::c_char {
+pub extern "C" fn script_to_asm_string(
+    script: *mut BSVScript,
+    error: *mut Error,
+) -> *mut libc::c_char {
     let script = unsafe { &mut *script };
     let string = BSVScript::to_asm_string(&script);
-    let c_str = CString::new(string).unwrap();
+    let c_str = match CString::new(string) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     c_str.into_raw()
 }
 
@@ -33,10 +52,19 @@ pub extern "C" fn script_to_asm_string(script: *mut BSVScript) -> *mut libc::c_c
 //     BSVScript::to_extended_asm_string(&self.0)
 // }
 #[no_mangle]
-pub extern "C" fn script_to_extended_asm_string(script: *mut BSVScript) -> *mut libc::c_char {
+pub extern "C" fn script_to_extended_asm_string(
+    script: *mut BSVScript,
+    error: *mut Error,
+) -> *mut libc::c_char {
     let script = unsafe { &mut *script };
     let string = BSVScript::to_extended_asm_string(&script);
-    let c_str = CString::new(string).unwrap();
+    let c_str = match CString::new(string) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     c_str.into_raw()
 }
 
@@ -44,10 +72,22 @@ pub extern "C" fn script_to_extended_asm_string(script: *mut BSVScript) -> *mut 
 //     Ok(Script(BSVScript::from_hex(hex)?))
 // }
 #[no_mangle]
-pub extern "C" fn script_from_hex(hex: *mut libc::c_char) -> *mut BSVScript {
+pub extern "C" fn script_from_hex(hex: *mut libc::c_char, error: *mut Error) -> *mut BSVScript {
     let hex = unsafe { CStr::from_ptr(hex) };
-    let hex = hex.to_str().unwrap();
-    let script = BSVScript::from_hex(hex).unwrap();
+    let hex = match hex.to_str() {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
+    let script = match BSVScript::from_hex(hex) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     Box::into_raw(Box::new(script))
 }
 
@@ -55,9 +95,19 @@ pub extern "C" fn script_from_hex(hex: *mut libc::c_char) -> *mut BSVScript {
 //     Ok(Script(BSVScript::from_bytes(bytes)?))
 // }
 #[no_mangle]
-pub extern "C" fn script_from_bytes(bytes: *mut u8, len: usize) -> *mut BSVScript {
+pub extern "C" fn script_from_bytes(
+    bytes: *mut u8,
+    len: usize,
+    error: *mut Error,
+) -> *mut BSVScript {
     let bytes = unsafe { std::slice::from_raw_parts(bytes, len) };
-    let script = BSVScript::from_bytes(bytes).unwrap();
+    let script = match BSVScript::from_bytes(bytes) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     Box::into_raw(Box::new(script))
 }
 
@@ -65,10 +115,25 @@ pub extern "C" fn script_from_bytes(bytes: *mut u8, len: usize) -> *mut BSVScrip
 //     Ok(Script(BSVScript::from_asm_string(asm_string)?))
 // }
 #[no_mangle]
-pub extern "C" fn script_from_asm_string(asm_string: *mut libc::c_char) -> *mut BSVScript {
+pub extern "C" fn script_from_asm_string(
+    asm_string: *mut libc::c_char,
+    error: *mut Error,
+) -> *mut BSVScript {
     let asm_string = unsafe { CStr::from_ptr(asm_string) };
-    let asm_string = asm_string.to_str().unwrap();
-    let script = BSVScript::from_asm_string(asm_string).unwrap();
+    let asm_string = match asm_string.to_str() {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
+    let script = match BSVScript::from_asm_string(asm_string) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     Box::into_raw(Box::new(script))
 }
 
@@ -76,9 +141,22 @@ pub extern "C" fn script_from_asm_string(asm_string: *mut libc::c_char) -> *mut 
 //     Ok(BSVScript::encode_pushdata(data_bytes)?)
 // }
 #[no_mangle]
-pub extern "C" fn script_encode_pushdata(data_bytes: *mut u8, len: usize) -> ByteArray {
+pub extern "C" fn script_encode_pushdata(
+    data_bytes: *mut u8,
+    len: usize,
+    error: *mut Error,
+) -> ByteArray {
     let data_bytes = unsafe { std::slice::from_raw_parts(data_bytes, len) };
-    let bytes = BSVScript::encode_pushdata(data_bytes).unwrap();
+    let bytes = match BSVScript::encode_pushdata(data_bytes) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return ByteArray {
+                data: std::ptr::null_mut(),
+                len: 0,
+            };
+        }
+    };
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
     ByteArray {
@@ -91,8 +169,17 @@ pub extern "C" fn script_encode_pushdata(data_bytes: *mut u8, len: usize) -> Byt
 //     Ok(BSVScript::get_pushdata_prefix_bytes(length)?)
 // }
 #[no_mangle]
-pub extern "C" fn script_get_pushdata_bytes(length: usize) -> ByteArray {
-    let bytes = BSVScript::get_pushdata_prefix_bytes(length).unwrap();
+pub extern "C" fn script_get_pushdata_bytes(length: usize, error: *mut Error) -> ByteArray {
+    let bytes = match BSVScript::get_pushdata_prefix_bytes(length) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return ByteArray {
+                data: std::ptr::null_mut(),
+                len: 0,
+            };
+        }
+    };
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
     ByteArray {
@@ -105,10 +192,25 @@ pub extern "C" fn script_get_pushdata_bytes(length: usize) -> ByteArray {
 //     Ok(serde_wasm_bindgen::to_value(&self.0)?)
 // }
 #[no_mangle]
-pub extern "C" fn script_to_script_bits(script: *mut BSVScript) -> *mut c_char {
+pub extern "C" fn script_to_script_bits(
+    script: *mut BSVScript,
+    error: *mut Error,
+) -> *mut libc::c_char {
     let script = unsafe { &mut *script };
-    let json = serde_json::to_string(&script).unwrap();
-    let c_string = CString::new(json).unwrap();
+    let json = match serde_json::to_string(&script) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
+    let c_string = match CString::new(json) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     c_string.into_raw()
 }
 
@@ -140,10 +242,16 @@ pub extern "C" fn script_get_script_length(script: *mut BSVScript) -> usize {
 //     BSVScript::to_hex(&self.0)
 // }
 #[no_mangle]
-pub extern "C" fn script_to_hex(script: *mut BSVScript) -> *mut libc::c_char {
+pub extern "C" fn script_to_hex(script: *mut BSVScript, error: *mut Error) -> *mut libc::c_char {
     let script = unsafe { &mut *script };
     let hex = BSVScript::to_hex(&script);
-    let c_str = CString::new(hex).unwrap();
+    let c_str = match CString::new(hex) {
+        Ok(s) => s,
+        Err(e) => {
+            set_error_message(error, e.to_string());
+            return std::ptr::null_mut();
+        }
+    };
     c_str.into_raw()
 }
 
