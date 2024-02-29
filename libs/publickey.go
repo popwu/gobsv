@@ -13,7 +13,7 @@ import (
 	"unsafe"
 )
 
-type PublicKey struct {
+type TxIn struct {
 	key *C.BSVPublicKey
 }
 
@@ -35,18 +35,18 @@ func PublicKeyFromBytes(bytes []byte) (*PublicKey, error) {
 	return &PublicKey{key: key}, nil
 }
 
-func (p *PublicKey) String() string {
+func (p *TxIn) String() string {
 	return p.ToHex()
 }
 
 // ByteArray publickey_to_bytes(BSVPublicKey* public_key);
-func (p *PublicKey) ToBytes() []byte {
+func (p *TxIn) ToBytes() []byte {
 	b := C.publickey_to_bytes(p.key)
 	return C.GoBytes(unsafe.Pointer(b.data), C.int(b.len))
 }
 
 // char* publickey_to_hex(BSVPublicKey* public_key);
-func (p *PublicKey) ToHex() string {
+func (p *TxIn) ToHex() string {
 	hex := C.publickey_to_hex(p.key)
 	return C.GoString(hex)
 }

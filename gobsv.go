@@ -1,4 +1,17 @@
-package gobsv
+package main
+
+import (
+	"fmt"
+	"gobsv/libs"
+)
+
+func main() {
+	pub, err := libs.PublicKeyFromHex("test")
+	fmt.Println(pub, err)
+
+	txin := libs.NewTxIn([]byte("test"), 1, nil, 1)
+	fmt.Println(txin)
+}
 
 // // NewPrivateKey 创建一个新的 PrivateKey 实例
 // func NewPrivateKey() *PrivateKey {
