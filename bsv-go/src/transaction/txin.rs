@@ -1,7 +1,8 @@
-use bsv::TxIn as BSVTxIn;
 use bsv::Script as BSVScript;
-use std::os::raw::c_char;
+use bsv::TxIn as BSVTxIn;
+use std::ffi::CStr;
 use std::ffi::CString;
+use std::os::raw::c_char;
 extern crate serde_json;
 
 #[repr(C)]
@@ -24,7 +25,13 @@ impl From<Vec<u8>> for ByteArray {
 //     TxIn(BSVTxIn::new(prev_tx_id, vout, &unlocking_script.0, sequence))
 // }
 #[no_mangle]
-pub extern "C" fn txin_new(prev_tx_id: *mut u8, prev_tx_id_len: usize, vout: u32, unlocking_script: *mut BSVScript, sequence: Option<u32>) -> *mut BSVTxIn {
+pub extern "C" fn txin_new(
+    prev_tx_id: *mut u8,
+    prev_tx_id_len: usize,
+    vout: u32,
+    unlocking_script: *mut BSVScript,
+    sequence: Option<u32>,
+) -> *mut BSVTxIn {
     let prev_tx_id = unsafe { std::slice::from_raw_parts(prev_tx_id, prev_tx_id_len) };
     let unlocking_script = unsafe { &*unlocking_script };
     let txin = BSVTxIn::new(prev_tx_id, vout, &unlocking_script, sequence);
@@ -44,7 +51,10 @@ pub extern "C" fn txin_empty() -> *mut BSVTxIn {
 //     self.0.get_prev_tx_id(little_endian)
 // }
 #[no_mangle]
-pub extern "C" fn txin_get_prev_tx_id(txin: *mut BSVTxIn, little_endian: Option<bool>) -> *mut ByteArray {
+pub extern "C" fn txin_get_prev_tx_id(
+    txin: *mut BSVTxIn,
+    little_endian: Option<bool>,
+) -> *mut ByteArray {
     let txin = unsafe { &*txin };
     let prev_tx_id = txin.get_prev_tx_id(little_endian);
     let data = prev_tx_id.as_ptr() as *mut u8;
@@ -57,7 +67,10 @@ pub extern "C" fn txin_get_prev_tx_id(txin: *mut BSVTxIn, little_endian: Option<
 //     self.0.get_prev_tx_id_hex(little_endian)
 // }
 #[no_mangle]
-pub extern "C" fn txin_get_prev_tx_id_hex(txin: *mut BSVTxIn, little_endian: Option<bool>) -> *mut libc::c_char {
+pub extern "C" fn txin_get_prev_tx_id_hex(
+    txin: *mut BSVTxIn,
+    little_endian: Option<bool>,
+) -> *mut libc::c_char {
     let txin = unsafe { &*txin };
     let prev_tx_id_hex = txin.get_prev_tx_id_hex(little_endian);
     let c_str = CString::new(prev_tx_id_hex).unwrap();
@@ -129,7 +142,10 @@ pub extern "C" fn txin_get_sequence_as_bytes(txin: *mut BSVTxIn) -> *mut ByteArr
 //     self.0.get_outpoint_bytes(little_endian)
 // }
 #[no_mangle]
-pub extern "C" fn txin_get_outpoint_bytes(txin: *mut BSVTxIn, little_endian: Option<bool>) -> *mut ByteArray {
+pub extern "C" fn txin_get_outpoint_bytes(
+    txin: *mut BSVTxIn,
+    little_endian: Option<bool>,
+) -> *mut ByteArray {
     let txin = unsafe { &*txin };
     let outpoint_bytes = txin.get_outpoint_bytes(little_endian);
     let data = outpoint_bytes.as_ptr() as *mut u8;
@@ -142,7 +158,10 @@ pub extern "C" fn txin_get_outpoint_bytes(txin: *mut BSVTxIn, little_endian: Opt
 //     self.0.get_outpoint_hex(little_endian)
 // }
 #[no_mangle]
-pub extern "C" fn txin_get_outpoint_hex(txin: *mut BSVTxIn, little_endian: Option<bool>) -> *mut libc::c_char {
+pub extern "C" fn txin_get_outpoint_hex(
+    txin: *mut BSVTxIn,
+    little_endian: Option<bool>,
+) -> *mut libc::c_char {
     let txin = unsafe { &*txin };
     let outpoint_hex = txin.get_outpoint_hex(little_endian);
     let c_str = CString::new(outpoint_hex).unwrap();
@@ -221,8 +240,8 @@ pub extern "C" fn txin_set_locking_script(txin: *mut BSVTxIn, locking_script: *m
 #[no_mangle]
 pub extern "C" fn txin_get_locking_script(txin: *mut BSVTxIn) -> *mut BSVScript {
     let txin = unsafe { &*txin };
-    let locking_script = txin.get_locking_script();
-    Box::into_raw(Box::new(locking_script))
+    let locking_script: Option<BSVScript> = txin.get_locking_script();
+    Box::into_raw(Box::new(locking_script.unwrap_or_else(BSVScript::default)))
 }
 
 // pub fn get_locking_script_bytes(&self) -> Option<Vec<u8>> {

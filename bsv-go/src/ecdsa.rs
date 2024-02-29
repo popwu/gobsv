@@ -1,7 +1,8 @@
-use bsv::ECDSA as BSVECDSA;
 use bsv::PrivateKey as BSVPrivateKey;
 use bsv::PublicKey as BSVPublicKey;
-use bsv::{RecoveryInfo as BSVRecoveryInfo, Signature as BSVSignature};
+use bsv::Signature as BSVSignature;
+use bsv::SigningHash;
+use bsv::ECDSA as BSVECDSA;
 
 // pub fn private_key_from_signature_k(
 //     signature: &Signature,
@@ -37,7 +38,8 @@ pub extern "C" fn ecdsa_private_key_from_signature_k(
         &ephemeral_key,
         preimage,
         hash_algo.into(),
-    ).unwrap();
+    )
+    .unwrap();
     Box::into_raw(Box::new(private_key))
 }
 
@@ -45,10 +47,17 @@ pub extern "C" fn ecdsa_private_key_from_signature_k(
 //     Ok(Signature(BSVECDSA::sign_with_random_k(&private_key.0, preimage, hash_algo.into(), reverse_k)?))
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_sign_with_random_k(private_key: *mut BSVPrivateKey, preimage: *const u8, preimage_len: usize, hash_algo: SigningHash, reverse_k: bool) -> *mut BSVSignature {
+pub extern "C" fn ecdsa_sign_with_random_k(
+    private_key: *mut BSVPrivateKey,
+    preimage: *const u8,
+    preimage_len: usize,
+    hash_algo: SigningHash,
+    reverse_k: bool,
+) -> *mut BSVSignature {
     let private_key = unsafe { &mut *private_key };
     let preimage = unsafe { std::slice::from_raw_parts(preimage, preimage_len) };
-    let signature = BSVECDSA::sign_with_random_k(&private_key, preimage, hash_algo.into(), reverse_k).unwrap();
+    let signature =
+        BSVECDSA::sign_with_random_k(&private_key, preimage, hash_algo.into(), reverse_k).unwrap();
     Box::into_raw(Box::new(signature))
 }
 
@@ -56,10 +65,18 @@ pub extern "C" fn ecdsa_sign_with_random_k(private_key: *mut BSVPrivateKey, prei
 //     Ok(Signature(BSVECDSA::sign_with_deterministic_k(&private_key.0, preimage, hash_algo.into(), reverse_k)?))
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_sign_with_deterministic_k(private_key: *mut BSVPrivateKey, preimage: *const u8, preimage_len: usize, hash_algo: SigningHash, reverse_k: bool) -> *mut BSVSignature {
+pub extern "C" fn ecdsa_sign_with_deterministic_k(
+    private_key: *mut BSVPrivateKey,
+    preimage: *const u8,
+    preimage_len: usize,
+    hash_algo: SigningHash,
+    reverse_k: bool,
+) -> *mut BSVSignature {
     let private_key = unsafe { &mut *private_key };
     let preimage = unsafe { std::slice::from_raw_parts(preimage, preimage_len) };
-    let signature = BSVECDSA::sign_with_deterministic_k(&private_key, preimage, hash_algo.into(), reverse_k).unwrap();
+    let signature =
+        BSVECDSA::sign_with_deterministic_k(&private_key, preimage, hash_algo.into(), reverse_k)
+            .unwrap();
     Box::into_raw(Box::new(signature))
 }
 
@@ -67,7 +84,11 @@ pub extern "C" fn ecdsa_sign_with_deterministic_k(private_key: *mut BSVPrivateKe
 //     Ok(Signature(BSVECDSA::sign_digest_with_deterministic_k(&private_key.0, digest)?))
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_sign_digest_with_deterministic_k(private_key: *mut BSVPrivateKey, digest: *const u8, digest_len: usize) -> *mut BSVSignature {
+pub extern "C" fn ecdsa_sign_digest_with_deterministic_k(
+    private_key: *mut BSVPrivateKey,
+    digest: *const u8,
+    digest_len: usize,
+) -> *mut BSVSignature {
     let private_key = unsafe { &mut *private_key };
     let digest = unsafe { std::slice::from_raw_parts(digest, digest_len) };
     let signature = BSVECDSA::sign_digest_with_deterministic_k(&private_key, digest).unwrap();
@@ -78,11 +99,18 @@ pub extern "C" fn ecdsa_sign_digest_with_deterministic_k(private_key: *mut BSVPr
 //     Ok(Signature(BSVECDSA::sign_with_k(&private_key.0, &ephemeral_key.0, preimage, hash_algo.into())?))
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_sign_with_k(private_key: *mut BSVPrivateKey, ephemeral_key: *mut BSVPrivateKey, preimage: *const u8, preimage_len: usize, hash_algo: SigningHash) -> *mut BSVSignature {
+pub extern "C" fn ecdsa_sign_with_k(
+    private_key: *mut BSVPrivateKey,
+    ephemeral_key: *mut BSVPrivateKey,
+    preimage: *const u8,
+    preimage_len: usize,
+    hash_algo: SigningHash,
+) -> *mut BSVSignature {
     let private_key = unsafe { &mut *private_key };
     let ephemeral_key = unsafe { &mut *ephemeral_key };
     let preimage = unsafe { std::slice::from_raw_parts(preimage, preimage_len) };
-    let signature = BSVECDSA::sign_with_k(&private_key, &ephemeral_key, preimage, hash_algo.into()).unwrap();
+    let signature =
+        BSVECDSA::sign_with_k(&private_key, &ephemeral_key, preimage, hash_algo.into()).unwrap();
     Box::into_raw(Box::new(signature))
 }
 
@@ -90,7 +118,13 @@ pub extern "C" fn ecdsa_sign_with_k(private_key: *mut BSVPrivateKey, ephemeral_k
 //     Ok(BSVECDSA::verify_digest(message, &pub_key.0, &signature.0, hash_algo.into())?)
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_verify_digest(message: *const u8, message_len: usize, pub_key: *mut BSVPublicKey, signature: *mut BSVSignature, hash_algo: SigningHash) -> bool {
+pub extern "C" fn ecdsa_verify_digest(
+    message: *const u8,
+    message_len: usize,
+    pub_key: *mut BSVPublicKey,
+    signature: *mut BSVSignature,
+    hash_algo: SigningHash,
+) -> bool {
     let message = unsafe { std::slice::from_raw_parts(message, message_len) };
     let pub_key = unsafe { &*pub_key };
     let signature = unsafe { &*signature };
@@ -101,7 +135,12 @@ pub extern "C" fn ecdsa_verify_digest(message: *const u8, message_len: usize, pu
 //     Ok(BSVECDSA::verify_hashbuf(digest, &pub_key.0, &signature.0)?)
 // }
 #[no_mangle]
-pub extern "C" fn ecdsa_verify_hashbuf(digest: *const u8, digest_len: usize, pub_key: *mut BSVPublicKey, signature: *mut BSVSignature) -> bool {
+pub extern "C" fn ecdsa_verify_hashbuf(
+    digest: *const u8,
+    digest_len: usize,
+    pub_key: *mut BSVPublicKey,
+    signature: *mut BSVSignature,
+) -> bool {
     let digest = unsafe { std::slice::from_raw_parts(digest, digest_len) };
     let pub_key = unsafe { &*pub_key };
     let signature = unsafe { &*signature };

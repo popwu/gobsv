@@ -1,6 +1,7 @@
 use bsv::Script as BSVScript;
-use std::os::raw::c_char;
+use std::ffi::CStr;
 use std::ffi::CString;
+use std::os::raw::c_char;
 
 #[repr(C)]
 pub struct ByteArray {
@@ -80,7 +81,10 @@ pub extern "C" fn script_encode_pushdata(data_bytes: *mut u8, len: usize) -> Byt
     let bytes = BSVScript::encode_pushdata(data_bytes).unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn get_pushdata_bytes(length: usize) -> Result<Vec<u8>, wasm_bindgen::JsError> {
@@ -91,7 +95,10 @@ pub extern "C" fn script_get_pushdata_bytes(length: usize) -> ByteArray {
     let bytes = BSVScript::get_pushdata_prefix_bytes(length).unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn to_script_bits(&self) -> Result<wasm_bindgen::JsValue, wasm_bindgen::JsError> {
@@ -114,7 +121,10 @@ pub extern "C" fn script_to_bytes(script: *mut BSVScript) -> ByteArray {
     let bytes = BSVScript::to_bytes(&script);
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn get_script_length(&self) -> usize {
@@ -143,5 +153,5 @@ pub extern "C" fn script_to_hex(script: *mut BSVScript) -> *mut libc::c_char {
 #[no_mangle]
 pub extern "C" fn script_remove_codeseparators(script: *mut BSVScript) {
     let script = unsafe { &mut *script };
-    BSVScript::remove_codeseparators(&mut script)
+    BSVScript::remove_codeseparators(script);
 }

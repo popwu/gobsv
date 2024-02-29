@@ -1,4 +1,6 @@
-use crate::{script::Script, transaction::Transaction};
+use bsv::Script;
+use bsv::Status;
+use bsv::Transaction;
 use bsv::{Interpreter as BSVInterpreter, State as BSVState};
 
 #[repr(C)]
@@ -22,9 +24,12 @@ impl From<Vec<u8>> for ByteArray {
 //     Ok(Interpreter(BSVInterpreter::from_transaction(&tx.0, txin_idx)?))
 // }
 #[no_mangle]
-pub extern "C" fn interpreter_from_transaction(tx: *mut Transaction, txin_idx: usize) -> *mut BSVInterpreter {
+pub extern "C" fn interpreter_from_transaction(
+    tx: *mut Transaction,
+    txin_idx: usize,
+) -> *mut BSVInterpreter {
     let tx = unsafe { &mut *tx };
-    let interpreter = BSVInterpreter::from_transaction(&tx.0, txin_idx).unwrap();
+    let interpreter = BSVInterpreter::from_transaction(&tx, txin_idx).unwrap();
     Box::into_raw(Box::new(interpreter))
 }
 
@@ -34,7 +39,7 @@ pub extern "C" fn interpreter_from_transaction(tx: *mut Transaction, txin_idx: u
 #[no_mangle]
 pub extern "C" fn interpreter_from_script(script: *mut Script) -> *mut BSVInterpreter {
     let script = unsafe { &mut *script };
-    let interpreter = BSVInterpreter::from_script(&script.0);
+    let interpreter = BSVInterpreter::from_script(&script);
     Box::into_raw(Box::new(interpreter))
 }
 
@@ -85,7 +90,11 @@ pub extern "C" fn interpreter_get_state(interpreter: *mut BSVInterpreter) -> *mu
 #[no_mangle]
 pub extern "C" fn state_get_executed_script(state: *mut BSVState) -> *mut Script {
     let state = unsafe { &mut *state };
-    let asm_string: String = state.executed_opcodes.iter().map(|x| x.to_string()).fold(String::new(), |acc, x| format!("{} {}", acc, x));
+    let asm_string: String = state
+        .executed_opcodes
+        .iter()
+        .map(|x| x.to_string())
+        .fold(String::new(), |acc, x| format!("{} {}", acc, x));
     let script = Script::from_asm_string(&asm_string).unwrap();
     Box::into_raw(Box::new(script))
 }
@@ -125,7 +134,7 @@ pub extern "C" fn state_get_alt_stack(state: *mut BSVState) -> *mut ByteArray {
 pub extern "C" fn state_get_status(state: *mut BSVState) -> i32 {
     let state = unsafe { &mut *state };
     match state.status {
-        Status::Ok => 0,
-        Status::Error => 1,
+        Status::Running => 0,
+        Status::Finished => 1,
     }
 }

@@ -1,4 +1,7 @@
+use bsv::Script as BSVScript;
 use bsv::TxOut as BSVTxOut;
+use std::ffi::CStr;
+use std::ffi::CString;
 
 #[repr(C)]
 pub struct ByteArray {
@@ -28,7 +31,7 @@ impl From<Vec<u8>> for ByteArray {
 #[no_mangle]
 pub extern "C" fn txout_new(value: u64, script_pub_key: *mut BSVScript) -> *mut BSVTxOut {
     let script_pub_key = unsafe { &mut *script_pub_key };
-    let tx_out = BSVTxOut::new(value, &script_pub_key.0);
+    let tx_out = BSVTxOut::new(value, &script_pub_key);
     Box::into_raw(Box::new(tx_out))
 }
 
@@ -50,7 +53,10 @@ pub extern "C" fn txout_get_satoshis_as_bytes(tx_out: *mut BSVTxOut) -> ByteArra
     let bytes = tx_out.get_satoshis_as_bytes();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn get_script_pub_key_size(&self) -> usize {
@@ -103,7 +109,10 @@ pub extern "C" fn txout_to_bytes(tx_out: *mut BSVTxOut) -> ByteArray {
     let bytes = tx_out.to_bytes().unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn to_hex(&self) -> Result<String, wasm_bindgen::JsError> {
@@ -112,7 +121,7 @@ pub extern "C" fn txout_to_bytes(tx_out: *mut BSVTxOut) -> ByteArray {
 #[no_mangle]
 pub extern "C" fn txout_to_hex(tx_out: *mut BSVTxOut) -> *mut libc::c_char {
     let tx_out = unsafe { &mut *tx_out };
-    let string = tx_out.to_hex();
+    let string = tx_out.to_hex().unwrap();
     let c_str = CString::new(string).unwrap();
     c_str.into_raw()
 }
@@ -121,9 +130,9 @@ pub extern "C" fn txout_to_hex(tx_out: *mut BSVTxOut) -> *mut libc::c_char {
 //     Ok(serde_wasm_bindgen::to_value(&self.0)?)
 // }
 #[no_mangle]
-pub extern "C" fn txout_to_json(tx_out: *mut BSVTxOut) -> *mut c_char {
+pub extern "C" fn txout_to_json(tx_out: *mut BSVTxOut) -> *mut libc::c_char {
     let tx_out = unsafe { &mut *tx_out };
-    let string = tx_out.to_json();
+    let string = tx_out.to_json().unwrap().to_string();
     let c_str = CString::new(string).unwrap();
     c_str.into_raw()
 }
@@ -132,9 +141,9 @@ pub extern "C" fn txout_to_json(tx_out: *mut BSVTxOut) -> *mut c_char {
 //     Ok(self.0.to_json_string()?)
 // }
 #[no_mangle]
-pub extern "C" fn txout_to_json_string(tx_out: *mut BSVTxOut) -> *mut c_char {
+pub extern "C" fn txout_to_json_string(tx_out: *mut BSVTxOut) -> *mut libc::c_char {
     let tx_out = unsafe { &mut *tx_out };
-    let string = tx_out.to_json_string();
+    let string = tx_out.to_json_string().unwrap();
     let c_str = CString::new(string).unwrap();
     c_str.into_raw()
 }

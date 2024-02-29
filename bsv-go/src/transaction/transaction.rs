@@ -1,17 +1,21 @@
-use bsv:: Transaction as BSVTransaction;
-use crate::{
-    keypair::private_key::PrivateKey,
-    script::Script,
-    sighash::{SigHash, SighashSignature},
-    PublicKey,
-};
-use bsv::BSVTxIn as BSVTxIn;
-use bsv::BSVTxOut as BSVTxOut;
+use bsv::Transaction as BSVTransaction;
+use bsv::{PrivateKey, PublicKey, Script, SighashSignature};
+// use crate::{
+//     keypair::private_key::PrivateKey,
+//     script::Script,
+//     sighash::{SigHash, SighashSignature},
+//     PublicKey,
+// };
+// use crate::txin as BSVTxIn;
+// use crate::txout as BSVTxOut;
+use bsv::TxIn as BSVTxIn;
+use bsv::TxOut as BSVTxOut;
 
 use std::slice;
-extern crate serde_json;
 extern crate libc;
+extern crate serde_json;
 use libc::c_char;
+use std::ffi::CStr;
 use std::ffi::CString;
 
 #[repr(C)]
@@ -66,20 +70,26 @@ pub extern "C" fn transaction_get_noutputs(transaction: *mut BSVTransaction) -> 
 //     self.0.get_input(index).map(BSVTxIn)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_get_input(transaction: *mut BSVTransaction, index: usize) -> *mut BSVTxIn {
+pub extern "C" fn get_input(
+    transaction: *mut BSVTransaction,
+    index: usize,
+) -> *mut Option<BSVTxIn> {
     let transaction = unsafe { &mut *transaction };
-    let BSVTxIn = transaction.get_input(index).map(BSVTxIn);
-    Box::into_raw(Box::new(BSVTxIn))
+    let tx_in = transaction.get_input(index);
+    Box::into_raw(Box::new(tx_in))
 }
 
 // pub fn get_output(&self, index: usize) -> Option<BSVTxOut> {
 //     self.0.get_output(index).map(BSVTxOut)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_get_output(transaction: *mut BSVTransaction, index: usize) -> *mut BSVTxOut {
+pub extern "C" fn transaction_get_output(
+    transaction: *mut BSVTransaction,
+    index: usize,
+) -> *mut Option<BSVTxOut> {
     let transaction = unsafe { &mut *transaction };
-    let BSVTxOut = transaction.get_output(index).map(BSVTxOut);
-    Box::into_raw(Box::new(BSVTxOut))
+    let tx_out = transaction.get_output(index);
+    Box::into_raw(Box::new(tx_out))
 }
 
 // pub fn get_n_locktime(&self) -> u32 {
@@ -95,12 +105,17 @@ pub extern "C" fn transaction_get_n_locktime(transaction: *mut BSVTransaction) -
 //     self.0.get_n_locktime_as_bytes()
 // }
 #[no_mangle]
-pub extern "C" fn transaction_get_n_locktime_as_bytes(transaction: *mut BSVTransaction) -> ByteArray {
+pub extern "C" fn transaction_get_n_locktime_as_bytes(
+    transaction: *mut BSVTransaction,
+) -> ByteArray {
     let transaction = unsafe { &mut *transaction };
     let bytes = transaction.get_n_locktime_as_bytes();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // /**
@@ -121,7 +136,10 @@ pub extern "C" fn transaction_new(version: u32, n_locktime: u32) -> *mut BSVTran
 //     Transaction(self.0.set_version(version))
 // }
 #[no_mangle]
-pub extern "C" fn transaction_set_version(transaction: *mut BSVTransaction, version: u32) -> *mut BSVTransaction {
+pub extern "C" fn transaction_set_version(
+    transaction: *mut BSVTransaction,
+    version: u32,
+) -> *mut BSVTransaction {
     let transaction = unsafe { &mut *transaction };
     let transaction = transaction.set_version(version);
     Box::into_raw(Box::new(transaction))
@@ -131,7 +149,10 @@ pub extern "C" fn transaction_set_version(transaction: *mut BSVTransaction, vers
 //     Transaction(self.0.set_nlocktime(n_locktime))
 // }
 #[no_mangle]
-pub extern "C" fn transaction_set_nlocktime(transaction: *mut BSVTransaction, n_locktime: u32) -> *mut BSVTransaction {
+pub extern "C" fn transaction_set_nlocktime(
+    transaction: *mut BSVTransaction,
+    n_locktime: u32,
+) -> *mut BSVTransaction {
     let transaction = unsafe { &mut *transaction };
     let transaction = transaction.set_nlocktime(n_locktime);
     Box::into_raw(Box::new(transaction))
@@ -161,7 +182,11 @@ pub extern "C" fn transaction_prepend_input(transaction: *mut BSVTransaction, in
 //     self.0.insert_input(index, &input.0)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_insert_input(transaction: *mut BSVTransaction, index: usize, input: *mut BSVTxIn) {
+pub extern "C" fn transaction_insert_input(
+    transaction: *mut BSVTransaction,
+    index: usize,
+    input: *mut BSVTxIn,
+) {
     let transaction = unsafe { &mut *transaction };
     let input = unsafe { &*input };
     transaction.insert_input(index, input);
@@ -181,7 +206,10 @@ pub extern "C" fn transaction_add_output(transaction: *mut BSVTransaction, outpu
 //     self.0.prepend_output(&output.0)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_prepend_output(transaction: *mut BSVTransaction, output: *mut BSVTxOut) {
+pub extern "C" fn transaction_prepend_output(
+    transaction: *mut BSVTransaction,
+    output: *mut BSVTxOut,
+) {
     let transaction = unsafe { &mut *transaction };
     let output = unsafe { &*output };
     transaction.prepend_output(output);
@@ -191,7 +219,11 @@ pub extern "C" fn transaction_prepend_output(transaction: *mut BSVTransaction, o
 //     self.0.insert_output(index, &output.0)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_insert_output(transaction: *mut BSVTransaction, index: usize, output: *mut BSVTxOut) {
+pub extern "C" fn transaction_insert_output(
+    transaction: *mut BSVTransaction,
+    index: usize,
+    output: *mut BSVTxOut,
+) {
     let transaction = unsafe { &mut *transaction };
     let output = unsafe { &*output };
     transaction.insert_output(index, output);
@@ -201,7 +233,11 @@ pub extern "C" fn transaction_insert_output(transaction: *mut BSVTransaction, in
 //     self.0.set_input(index, &input.0);
 // }
 #[no_mangle]
-pub extern "C" fn transaction_set_input(transaction: *mut BSVTransaction, index: usize, input: *mut BSVTxIn) {
+pub extern "C" fn transaction_set_input(
+    transaction: *mut BSVTransaction,
+    index: usize,
+    input: *mut BSVTxIn,
+) {
     let transaction = unsafe { &mut *transaction };
     let input = unsafe { &*input };
     transaction.set_input(index, input);
@@ -211,7 +247,11 @@ pub extern "C" fn transaction_set_input(transaction: *mut BSVTransaction, index:
 //     self.0.set_output(index, &output.0);
 // }
 #[no_mangle]
-pub extern "C" fn transaction_set_output(transaction: *mut BSVTransaction, index: usize, output: *mut BSVTxOut) {
+pub extern "C" fn transaction_set_output(
+    transaction: *mut BSVTransaction,
+    index: usize,
+    output: *mut BSVTxOut,
+) {
     let transaction = unsafe { &mut *transaction };
     let output = unsafe { &*output };
     transaction.set_output(index, output);
@@ -241,9 +281,12 @@ pub extern "C" fn transaction_is_coinbase_impl(transaction: *mut BSVTransaction)
 //     self.0.satoshis_in()
 // }
 #[no_mangle]
-pub extern "C" fn transaction_satoshis_in(transaction: *mut BSVTransaction) -> Option<u64> {
+pub extern "C" fn transaction_satoshis_in(transaction: *mut BSVTransaction) -> i64 {
     let transaction = unsafe { &mut *transaction };
-    transaction.satoshis_in()
+    match transaction.satoshis_in() {
+        Some(value) => value as i64,
+        None => -1,
+    }
 }
 
 // /**
@@ -322,7 +365,10 @@ pub extern "C" fn transaction_to_bytes(transaction: *mut BSVTransaction) -> *mut
     let bytes = transaction.to_bytes().unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    let byte_array = ByteArray { data: Box::into_raw(out) as *mut u8, len };
+    let byte_array = ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    };
     Box::into_raw(Box::new(byte_array))
 }
 
@@ -361,11 +407,15 @@ pub extern "C" fn transaction_get_size(transaction: *mut BSVTransaction) -> usiz
 //     }
 // }
 #[no_mangle]
-pub extern "C" fn transaction_add_inputs(transaction: *mut BSVTransaction, tx_ins: *mut BSVTxIn, len: usize) {
+pub extern "C" fn transaction_add_inputs(
+    transaction: *mut BSVTransaction,
+    tx_ins: *mut BSVTxIn,
+    len: usize,
+) {
     let transaction = unsafe { &mut *transaction };
     let tx_ins = unsafe { std::slice::from_raw_parts(tx_ins, len) };
-    for &tx_in in tx_ins {
-        transaction.add_input(&tx_in);
+    for tx_in in tx_ins {
+        transaction.add_input(tx_in);
     }
 }
 
@@ -382,11 +432,14 @@ pub extern "C" fn transaction_add_inputs(transaction: *mut BSVTransaction, tx_in
 pub extern "C" fn transaction_get_outpoints(transaction: *mut BSVTransaction) -> ByteArrayArray {
     let transaction = unsafe { &mut *transaction };
     let outpoints = transaction.get_outpoints();
-    let mut byte_arrays: Vec<ByteArray> = outpoints.into_iter().map(|op| {
-        let len = op.len();
-        let data = op.into_boxed_slice().as_mut_ptr();
-        ByteArray { data, len }
-    }).collect();
+    let mut byte_arrays: Vec<ByteArray> = outpoints
+        .into_iter()
+        .map(|op| {
+            let len = op.len();
+            let data = op.into_boxed_slice().as_mut_ptr();
+            ByteArray { data, len }
+        })
+        .collect();
     let len = byte_arrays.len();
     let data = byte_arrays.as_mut_ptr();
     std::mem::forget(byte_arrays);
@@ -405,9 +458,12 @@ pub extern "C" fn transaction_get_outpoints(transaction: *mut BSVTransaction) ->
 //     }
 // }
 
-
 #[no_mangle]
-pub extern "C" fn transaction_add_outputs(transaction: *mut BSVTransaction, tx_outs: *mut *mut BSVTxOut, len: usize) {
+pub extern "C" fn transaction_add_outputs(
+    transaction: *mut BSVTransaction,
+    tx_outs: *mut *mut BSVTxOut,
+    len: usize,
+) {
     let transaction = unsafe { &mut *transaction };
     let tx_outs = unsafe { slice::from_raw_parts(tx_outs, len) };
     for &output in tx_outs {
@@ -442,7 +498,10 @@ pub extern "C" fn transaction_get_id_bytes(transaction: *mut BSVTransaction) -> 
     let bytes = transaction.get_id_bytes().unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    let byte_array = ByteArray { data: Box::into_raw(out) as *mut u8, len };
+    let byte_array = ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    };
     Box::into_raw(Box::new(byte_array))
 }
 
@@ -458,7 +517,10 @@ pub extern "C" fn transaction_to_compact_bytes(transaction: *mut BSVTransaction)
     let bytes = transaction.to_compact_bytes().unwrap();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    let byte_array = ByteArray { data: Box::into_raw(out) as *mut u8, len };
+    let byte_array = ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    };
     Box::into_raw(Box::new(byte_array))
 }
 
@@ -513,11 +575,21 @@ pub extern "C" fn transaction_is_coinbase(transaction: *mut BSVTransaction) -> b
 //     Ok(SighashSignature(self.0.sign(&priv_key.0, sighash.into(), n_tx_in, &unsigned_script.0, value)?))
 // }
 #[no_mangle]
-pub extern "C" fn transaction_sign(transaction: *mut BSVTransaction, priv_key: *mut PrivateKey, sighash: SigHash, n_tx_in: usize, unsigned_script: *mut Script, value: u64) -> *mut SighashSignature {
+pub extern "C" fn transaction_sign(
+    transaction: *mut BSVTransaction,
+    priv_key: *mut PrivateKey,
+    sighash: i32,
+    n_tx_in: usize,
+    unsigned_script: *mut Script,
+    value: u64,
+) -> *mut SighashSignature {
     let transaction = unsafe { &mut *transaction };
     let priv_key = unsafe { &*priv_key };
     let unsigned_script = unsafe { &*unsigned_script };
-    let sighash_signature = transaction.sign(priv_key, sighash, n_tx_in, unsigned_script, value).unwrap();
+    let sighash = unsafe { std::mem::transmute(sighash as u8) };
+    let sighash_signature = transaction
+        .sign(priv_key, sighash, n_tx_in, unsigned_script, value)
+        .unwrap();
     Box::into_raw(Box::new(sighash_signature))
 }
 
@@ -540,12 +612,30 @@ pub extern "C" fn transaction_sign(transaction: *mut BSVTransaction, priv_key: *
 //     )?))
 // }
 #[no_mangle]
-pub extern "C" fn transaction_sign_with_k(transaction: *mut BSVTransaction, priv_key: *mut PrivateKey, ephemeral_key: *mut PrivateKey, sighash: SigHash, n_tx_in: usize, unsigned_script: *mut Script, value: u64) -> *mut SighashSignature {
+pub extern "C" fn transaction_sign_with_k(
+    transaction: *mut BSVTransaction,
+    priv_key: *mut PrivateKey,
+    ephemeral_key: *mut PrivateKey,
+    sighash: i32,
+    n_tx_in: usize,
+    unsigned_script: *mut Script,
+    value: u64,
+) -> *mut SighashSignature {
     let transaction = unsafe { &mut *transaction };
     let priv_key = unsafe { &*priv_key };
     let ephemeral_key = unsafe { &*ephemeral_key };
     let unsigned_script = unsafe { &*unsigned_script };
-    let sighash_signature = transaction.sign_with_k(priv_key, ephemeral_key, sighash, n_tx_in, unsigned_script, value).unwrap();
+    let sighash = unsafe { std::mem::transmute(sighash as u8) };
+    let sighash_signature = transaction
+        .sign_with_k(
+            priv_key,
+            ephemeral_key,
+            sighash,
+            n_tx_in,
+            unsigned_script,
+            value,
+        )
+        .unwrap();
     Box::into_raw(Box::new(sighash_signature))
 }
 
@@ -553,13 +643,25 @@ pub extern "C" fn transaction_sign_with_k(transaction: *mut BSVTransaction, priv
 //     Ok(self.0.sighash_preimage(sighash.into(), n_tx_in, &unsigned_script.0, value)?)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_sighash_preimage(transaction: *mut BSVTransaction, sighash: SigHash, n_tx_in: usize, unsigned_script: *mut Script, value: u64) -> *mut ByteArray {
+pub extern "C" fn transaction_sighash_preimage(
+    transaction: *mut BSVTransaction,
+    sighash: i32,
+    n_tx_in: usize,
+    unsigned_script: *mut Script,
+    value: u64,
+) -> *mut ByteArray {
     let transaction = unsafe { &mut *transaction };
     let unsigned_script = unsafe { &*unsigned_script };
-    let preimage = transaction.sighash_preimage(sighash, n_tx_in, unsigned_script, value).unwrap();
+    let sighash = unsafe { std::mem::transmute(sighash as u8) };
+    let preimage = transaction
+        .sighash_preimage(sighash, n_tx_in, unsigned_script, value)
+        .unwrap();
     let len = preimage.len();
     let out = preimage.into_boxed_slice();
-    let byte_array = ByteArray { data: Box::into_raw(out) as *mut u8, len };
+    let byte_array = ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    };
     Box::into_raw(Box::new(byte_array))
 }
 
@@ -567,7 +669,11 @@ pub extern "C" fn transaction_sighash_preimage(transaction: *mut BSVTransaction,
 //     self.0.verify(&pub_key.0, &sig.0)
 // }
 #[no_mangle]
-pub extern "C" fn transaction_verify(transaction: *mut BSVTransaction, pub_key: *mut PublicKey, sig: *mut SighashSignature) -> bool {
+pub extern "C" fn transaction_verify(
+    transaction: *mut BSVTransaction,
+    pub_key: *mut PublicKey,
+    sig: *mut SighashSignature,
+) -> bool {
     let transaction = unsafe { &mut *transaction };
     let pub_key = unsafe { &*pub_key };
     let sig = unsafe { &*sig };
@@ -578,7 +684,12 @@ pub extern "C" fn transaction_verify(transaction: *mut BSVTransaction, pub_key: 
 //     self.0._verify(&pub_key.0, &sig.0, reverse_digest)
 // }
 #[no_mangle]
-pub extern "C" fn transaction__verify(transaction: *mut BSVTransaction, pub_key: *mut PublicKey, sig: *mut SighashSignature, reverse_digest: bool) -> bool {
+pub extern "C" fn transaction__verify(
+    transaction: *mut BSVTransaction,
+    pub_key: *mut PublicKey,
+    sig: *mut SighashSignature,
+    reverse_digest: bool,
+) -> bool {
     let transaction = unsafe { &mut *transaction };
     let pub_key = unsafe { &*pub_key };
     let sig = unsafe { &*sig };

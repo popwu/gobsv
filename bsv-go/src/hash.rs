@@ -1,4 +1,11 @@
 use bsv::Hash as BSVHash;
+use std::ffi::CString;
+
+#[repr(C)]
+pub struct ByteArray {
+    data: *mut u8,
+    len: usize,
+}
 
 // pub fn to_bytes(&self) -> Vec<u8> {
 //     self.0.to_bytes()
@@ -9,7 +16,10 @@ pub extern "C" fn hash_to_bytes(hash: *mut BSVHash) -> ByteArray {
     let bytes = hash.to_bytes();
     let len = bytes.len();
     let out = bytes.into_boxed_slice();
-    ByteArray { data: Box::into_raw(out) as *mut u8, len }
+    ByteArray {
+        data: Box::into_raw(out) as *mut u8,
+        len,
+    }
 }
 
 // pub fn to_hex(&self) -> String {
@@ -87,7 +97,12 @@ pub extern "C" fn sha_512(input: *mut u8, len: usize) -> *mut BSVHash {
 //     Self(BSVHash::sha_256d_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn sha_512_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn sha_512_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::sha_512_hmac(input, key);
@@ -98,7 +113,12 @@ pub extern "C" fn sha_512_hmac(input: *mut u8, input_len: usize, key: *mut u8, k
 //     Self(BSVHash::sha_256d_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn sha_256_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn sha_256_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::sha_256_hmac(input, key);
@@ -109,7 +129,12 @@ pub extern "C" fn sha_256_hmac(input: *mut u8, input_len: usize, key: *mut u8, k
 //     Self(BSVHash::sha_256d_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn sha_256d_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn sha_256d_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::sha_256d_hmac(input, key);
@@ -120,7 +145,12 @@ pub extern "C" fn sha_256d_hmac(input: *mut u8, input_len: usize, key: *mut u8, 
 //     Self(BSVHash::sha_1_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn sha_1_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn sha_1_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::sha_1_hmac(input, key);
@@ -131,7 +161,12 @@ pub extern "C" fn sha_1_hmac(input: *mut u8, input_len: usize, key: *mut u8, key
 //     Self(BSVHash::ripemd_160_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn ripemd_160_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn ripemd_160_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::ripemd_160_hmac(input, key);
@@ -142,7 +177,12 @@ pub extern "C" fn ripemd_160_hmac(input: *mut u8, input_len: usize, key: *mut u8
 //     Self(BSVHash::hash_160_hmac(input, key))
 // }
 #[no_mangle]
-pub extern "C" fn hash_160_hmac(input: *mut u8, input_len: usize, key: *mut u8, key_len: usize) -> *mut BSVHash {
+pub extern "C" fn hash_160_hmac(
+    input: *mut u8,
+    input_len: usize,
+    key: *mut u8,
+    key_len: usize,
+) -> *mut BSVHash {
     let input = unsafe { std::slice::from_raw_parts(input, input_len) };
     let key = unsafe { std::slice::from_raw_parts(key, key_len) };
     let hash = BSVHash::hash_160_hmac(input, key);
